@@ -15,17 +15,30 @@ const apiUrls = {       // API URL for each year
 
 // Function to initialize the buttons
 function initializeButtons() {
-    const buttonsContainer = document.getElementById('buttons');
+    const buttonsContainer = document.getElementById('buttons-container');
     Object.keys(apiUrls).forEach(year => {
         const button = document.createElement('button');
         button.textContent = year;
-        button.addEventListener('click', () => fetchData(year));
+        button.classList.add('button-year'); // Add the general button class
+        button.addEventListener('click', function() {
+            fetchData(year);
+            updateButtonStyles(button); // Function to update button styles
+        });
         buttonsContainer.appendChild(button);
     });
 }
-
 // Call the function to initialize buttons
 initializeButtons();
+function updateButtonStyles(selectedButton) {
+    // Remove 'selected' class from all buttons
+    document.querySelectorAll('.button-year').forEach(btn => {
+        btn.classList.remove('selected');
+    });
+    // Add 'selected' class to the clicked button
+    selectedButton.classList.add('selected');
+}
+
+
 
 
 google.charts.load('current', {'packages':['corechart']});
@@ -37,17 +50,20 @@ async function fetchData(year) {
         const data = await response.json();
 
         const pieChartData = processDataForPieChart(data);
+        const columnChartData = processDataForColumnChart(data); // Add this line
 
-        //console.log('Received data:', data);
         console.log(`Fields for ${year}:`, Object.keys(data.result.records[0]));
 
-        google.charts.setOnLoadCallback(() => drawPieChart(pieChartData));
+        // Call drawCharts function with both data sets
+        google.charts.setOnLoadCallback(() => drawCharts(columnChartData, pieChartData));
         updateTable(data);
-        // updateCharts(data);
     } catch (error) {
         console.error('Error fetching data:', error);
     }
 }
+
+
+
 
 
 const fieldMappings = {
@@ -55,22 +71,13 @@ const fieldMappings = {
     'MO': ['Motorji'],
     'OV': ['Osebna vozila'],
     'AB': ['Avtobusi'],
-    'LT': ['Lah. tov < 3,5t', 'Lah. tov. < 3,5t', 'Lah. tov. < 3,5t', 'Lah. tov.  < 3,5t'], // All variations
-    'ST': ['Sr. tov 3,5-7t', 'Sr. tov. 3,5-7t', 'Sr. tov. < 3,5t', 'Sr. tov.  3,5-7t', 'Sr. tov  3,5-7t'],
+    'LT': ['Lah. tov < 3,5t', 'Lah. tov. < 3,5t', 'Lah. tov.  < 3,5t'], // All variations
+    'ST': ['Sr. tov 3,5-7t', 'Sr. tov. 3,5-7t', 'Sr. tov.  3,5-7t', 'Sr. tov  3,5-7t'],
     'TT': ['Tež. tov. nad 7t'],
     'TP': ['Tov. s prik.'],
     'VL': ['Vlačilci'],
     'Vsa vozila': ['Vsa vozila (PLDP)']
 };
-
-function findFieldName(dataItem, possibleFieldNames) {
-    for (let i = 0; i < possibleFieldNames.length; i++) {
-        if (dataItem.hasOwnProperty(possibleFieldNames[i])) {
-            return possibleFieldNames[i];
-        }
-    }
-    return null; // Return null if none of the field names are found
-}
 
 
 function updateTable(apiResponse) {
@@ -117,7 +124,40 @@ function updateTable(apiResponse) {
 }
 
 
+function findFieldName(dataItem, possibleFieldNames) {
+    for (let i = 0; i < possibleFieldNames.length; i++) {
+        if (dataItem.hasOwnProperty(possibleFieldNames[i])) {
+            return possibleFieldNames[i];
+        }
+    }
+    return null; // Return null if none of the field names are found
+}
 
+
+function processDataForColumnChart(apiResponse) {
+    let sections = {};
+
+    apiResponse.result.records.forEach(record => {
+        const sectionName = record['Prometni odsek'];
+        const vehicleCount = parseInt(record['Vsa vozila (PLDP)']) || 0;
+
+        if (sections[sectionName]) {
+            sections[sectionName] += vehicleCount;
+        } else {
+            sections[sectionName] = vehicleCount;
+        }
+    });
+
+    // Convert to array and sort
+    let sortedSections = Object.entries(sections).sort((a, b) => b[1] - a[1]);
+    
+    // Slice to get top 5 sections
+    sortedSections = sortedSections.slice(0, 5);
+
+    let chartData = [['Prometni Odsek', 'Vsa vozila']];
+    chartData.push(...sortedSections);
+    return chartData;
+}
 
 function processDataForPieChart(apiResponse) {
     let vehicleCounts = {
@@ -137,8 +177,8 @@ function processDataForPieChart(apiResponse) {
         vehicleCounts['MO'] += parseInt(record['Motorji']) || 0;
         vehicleCounts['OV'] += parseInt(record['Osebna vozila']) || 0;
         vehicleCounts['AB'] += parseInt(record['Avtobusi']) || 0;
-        vehicleCounts['LT'] += parseInt(record['Lah. tov < 3,5t', 'Lah. tov. < 3,5t', 'Lah. tov. < 3,5t', 'Lah. tov.  < 3,5t']) || 0;
-        vehicleCounts['ST'] += parseInt(record['Sr. tov 3,5-7t', 'Sr. tov. 3,5-7t', 'Sr. tov. < 3,5t', 'Sr. tov.  3,5-7t', 'Sr. tov  3,5-7t']) || 0;
+        vehicleCounts['LT'] += parseInt(record['Lah. tov < 3,5t', 'Lah. tov. < 3,5t', 'Lah. tov.  < 3,5t']) || 0;
+        vehicleCounts['ST'] += parseInt(record['Sr. tov 3,5-7t', 'Sr. tov. 3,5-7t', 'Sr. tov.  3,5-7t', 'Sr. tov  3,5-7t']) || 0;
         vehicleCounts['TT'] += parseInt(record['Tež. tov. nad 7t']) || 0;
         vehicleCounts['TP'] += parseInt(record['Tov. s prik.']) || 0;
         vehicleCounts['VL'] += parseInt(record['Vlačilci']) || 0;
@@ -174,6 +214,7 @@ function drawCharts(columnChartData, pieChartData) {
     // Draw Pie Chart
     drawPieChart(pieChartData);
 }
+
 
 function drawColumnChart(data) {
     var dataTable = google.visualization.arrayToDataTable(data);

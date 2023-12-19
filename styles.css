@@ -1,5 +1,48 @@
-.selected-button {
-    background-color: #4CAF50; /* Example background color */
-    color: white;
-    /* Other styles for selected button */
+* {
+    font-family: Roboto;
+}
+
+html {background-color: #e7e7e7 }
+
+
+/* Container for the buttons to align them nicely */
+#buttons-container {
+    text-align: center;
+    margin: 20px 0;
+}
+
+/* General button styles */
+.button-year {
+    background-color: white; /* Light gray background */
+    border: none; /* No border */
+    color: black; /* Text color */
+    padding: 10px 20px; /* Padding inside the buttons */
+    text-align: center; /* Center the text inside */
+    text-decoration: none; /* No underline */
+    display: inline-block; /* Display buttons inline */
+    font-size: 16px; /* Font size */
+    margin: 4px 9px; /* Margin around buttons */
+    cursor: pointer; /* Cursor to pointer to indicate it's clickable */
+    border-radius: 5px; /* Rounded corners */
+    transition: background-color 0.3s; /* Smooth transition for hover effect */
+}
+
+/* Button hover effect */
+.button-year:hover {
+    background-color: #ddd; /* Darker shade when hovered */
+}
+
+/* Selected button style */
+.button-year.selected {
+    background-color: #007bff; /* Blue background for selected button */
+    color: white; /* White text for selected button */
+}
+
+
+
+@media (max-width: 600px) {
+    .button-year {
+        flex-basis: 100%; /* On small screens, buttons take full width */
+        margin: 5px 0; /* Adjust margin for vertical layout */
+    }
 }

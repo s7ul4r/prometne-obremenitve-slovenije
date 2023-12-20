@@ -52,7 +52,7 @@ async function fetchData(year) {
         const pieChartData = processDataForPieChart(data);
         const columnChartData = processDataForColumnChart(data); // Add this line
 
-        console.log(`Fields for ${year}:`, Object.keys(data.result.records[0]));
+        console.log(data.result.records);
 
         // Call drawCharts function with both data sets
         google.charts.setOnLoadCallback(() => drawCharts(columnChartData, pieChartData));

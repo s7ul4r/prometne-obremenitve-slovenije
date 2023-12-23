@@ -1176,5 +1176,3 @@ const trafficSections = {
     "GRABONOŠ - RADENCI": "Radenci"
 };
 
-// Example usage:
-console.log(trafficSections["DRAGUČOVA - MB (ZRKOVSKA)"]); // Outputs: Maribor

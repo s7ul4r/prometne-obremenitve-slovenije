@@ -1,0 +1,35 @@
+/* Container for the buttons to align them nicely */
+#buttons-container {
+    text-align: center;
+}
+
+
+/* General button styles */
+.button-year {
+    background-color: white; /* Light gray background */
+    color: black; /* Text color */
+    padding: 10px 20px; /* Padding inside the buttons */
+    text-align: center; /* Center the text inside */
+    text-decoration: none; /* No underline */
+    display: inline-block; /* Display buttons inline */
+    font-size: 20px; /* Font size */
+    margin-left: 7.5px; /* Margin around buttons */
+    margin-right: 7.5px;
+    cursor: pointer; /* Cursor to pointer to indicate it's clickable */
+    border-radius: 10px; /* Rounded corners */
+    transition: background-color 0.3s; /* Smooth transition for hover effect */
+    border: 1px solid #ccc; /* Example border */
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1); /* Shadow for depth */
+    margin: 15px;
+}
+
+/* Button hover effect */
+.button-year:hover {
+    background-color: #ddd; /* Darker shade when hovered */
+}
+
+/* Selected button style */
+.button-year.selected {
+    background-color: #3466CC; /* Blue background for selected button */
+    color: white; /* White text for selected button */
+}

@@ -3,32 +3,39 @@
 <head>
     <script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
     <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="buttons.css">
+    <link rel="stylesheet" href="charts.css">
+    <link rel="stylesheet" href="table.css">
     <link href='http://fonts.googleapis.com/css?family=Roboto' rel='stylesheet' type='text/css'>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Prometna obremenitev Slovenije</title>
+    
 </head>
 <body>
     <div id="buttons-container">
-        <!-- Generate buttons for each year -->
-    </div>
-    
-    <div id="column-chart" style="width: 500px; height: 500px;"></div>
-
-    <div id="geo-chart" style="width: 900px; height: 500px;"></div>
-
-    <div id="pie-chart" style="width: 500px; height: 500px;"></div>
-
-    <div id="data-table">
-        <!-- Data from API will be displayed here -->
     </div>
 
+    <div class="charts-container">
+        <div id="column-chart"></div>
+
+        <div id="geo-chart"></div>
+
+        <div id="pie-chart" ></div>
+    </div>
+
+    <div class="table-container">
+        <table>
+            <div id="data-table"></div>
+        </table>
+    </div> 
+
+    <p> <b>MO</b> = Motorji | <b>OV</b> = Osebna vozila | <b>AB</b> = Avtobusi | <b>LT</b> = Lahko tovorno vozilo <3t | <b>ST</b> = Srednje lahko tovorno vozilo 3t-7t | <b>TT</b> = Težko tovorno vozilo >7t | <b>TP</b> = Tovor s prikolico | <b>VL</b> = Vlačilci</p>
 
 
 
     
-
-
+    <script src="traffic-sections.js"></script>
     <script src="script.js"></script> <!-- Link to your JavaScript file -->
 </body>
 </html>

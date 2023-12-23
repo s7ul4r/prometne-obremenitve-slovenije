@@ -1,0 +1,27 @@
+.charts-container {
+    max-height: 450px; /* Adjust the height as needed */
+    overflow: auto; /* Add vertical scrollbar */
+    white-space: nowrap;
+}
+
+#column-chart, #geo-chart, #pie-chart {
+    display: inline-block;
+    min-height: 400px;
+    width: 30.7%;
+    margin: 15px;
+    padding: 5px;
+    border: 1px solid #ccc; /* Example border */
+    border-radius: 10px; /* Rounded corners */
+    background-color: white;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1); /* Shadow for depth */
+}
+
+
+@media (max-width: 1000px) {
+    #column-chart, #geo-chart, #pie-chart {
+        display: grid; /* Stacks the elements vertically */
+        width: 100%; /* Full width for smaller screens */
+        margin: 15px;
+
+    }
+}

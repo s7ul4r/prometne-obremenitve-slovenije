@@ -13,6 +13,9 @@ const apiUrls = {       // API URL for each year
     '2011': 'https://podatki.gov.si/api/3/action/datastore_search?resource_id=4913b207-ab2c-4fd3-b91b-1889fa1c7054'
 };
 
+
+
+
 // Function to initialize the buttons
 function initializeButtons() {
     const buttonsContainer = document.getElementById('buttons-container');
@@ -29,6 +32,7 @@ function initializeButtons() {
 }
 // Call the function to initialize buttons
 initializeButtons();
+
 function updateButtonStyles(selectedButton) {
     // Remove 'selected' class from all buttons
     document.querySelectorAll('.button-year').forEach(btn => {
@@ -37,9 +41,6 @@ function updateButtonStyles(selectedButton) {
     // Add 'selected' class to the clicked button
     selectedButton.classList.add('selected');
 }
-
-
-
 
 google.charts.load('current', {'packages':['corechart']});
 
@@ -57,13 +58,30 @@ async function fetchData(year) {
         // Call drawCharts function with both data sets
         google.charts.setOnLoadCallback(() => drawCharts(columnChartData, pieChartData));
         updateTable(data);
+
+        // New logic to process traffic data for GeoChart
+        let cityTrafficCounts = {};
+        data.result.records.forEach(record => {
+            let section = record['Prometni odsek'];
+            let trafficCount = parseInt(record['Vsa vozila (PLDP)']) || 0;
+            if (trafficSections.hasOwnProperty(section)) {
+                let city = trafficSections[section];
+                if (!cityTrafficCounts[city]) {
+                    cityTrafficCounts[city] = 0;
+                }
+                cityTrafficCounts[city] += trafficCount;
+            }
+        });
+
+        drawGeoChart(cityTrafficCounts);
+        
+
     } catch (error) {
         console.error('Error fetching data:', error);
     }
+
+    
 }
-
-
-
 
 
 const fieldMappings = {
@@ -193,16 +211,65 @@ function processDataForPieChart(apiResponse) {
 }
 
 
+function drawColumnChart(data) {
+    var dataTable = google.visualization.arrayToDataTable(data);
+
+    var options = {
+        colors: ['#109619']
+    };
+
+    var chart = new google.visualization.ColumnChart(document.getElementById('column-chart'));
+    chart.draw(dataTable, options);
+}
+
 function drawPieChart(dataArray) {
     var dataTable = google.visualization.arrayToDataTable(dataArray);
 
     var options = {
-        title: 'Prometna obremenitev glede na tip vozila',
-        // Other options as needed
+
     };
 
     var chart = new google.visualization.PieChart(document.getElementById('pie-chart'));
     chart.draw(dataTable, options);
+}
+
+
+
+function drawGeoChart(cityTrafficCounts) {
+    // Ensure Google Visualization API is loaded
+    google.charts.load('current', {
+        'packages': ['geochart'],
+        // Note: Depending on your locale, you might need to set other options
+    });
+    google.charts.setOnLoadCallback(drawChart);
+
+    function drawChart() {
+        var data = new google.visualization.DataTable();
+        data.addColumn('string', 'City');
+        data.addColumn('number', 'Traffic Density');
+
+        for (var city in cityTrafficCounts) {
+            data.addRow([city, cityTrafficCounts[city]]);
+        }
+
+        var options = {
+            region: 'SI', // Set the region to Slovenia; change as needed
+            displayMode: 'regions',
+            resolution: 'provinces',
+            colorAxis: {colors: ['#e6f2ff', '#0000ff']}, // Color range; adjust as needed
+            datalessRegionColor: 'ffffff'
+        };
+
+        var chart = new google.visualization.GeoChart(document.getElementById('geo-chart'));
+        chart.draw(data, options);
+    }
+}
+
+function initMap() {
+    const map = new google.maps.Map(document.getElementById('map'), {
+        center: { lat: -34.397, lng: 150.644 },
+        zoom: 8
+    });
 }
 
 
@@ -216,26 +283,3 @@ function drawCharts(columnChartData, pieChartData) {
 }
 
 
-function drawColumnChart(data) {
-    var dataTable = google.visualization.arrayToDataTable(data);
-
-    var options = {
-        title: 'Traffic Density by Prometni Odsek',
-        legend: { position: 'bottom' }
-    };
-
-    var chart = new google.visualization.ColumnChart(document.getElementById('column-chart'));
-    chart.draw(dataTable, options);
-}
-
-function drawPieChart(data) {
-    var dataTable = google.visualization.arrayToDataTable(data);
-
-    var options = {
-        title: 'Prometna obremenitev glede na tip vozila',
-        pieHole: 0.4,
-    };
-
-    var chart = new google.visualization.PieChart(document.getElementById('pie-chart'));
-    chart.draw(dataTable, options);
-}

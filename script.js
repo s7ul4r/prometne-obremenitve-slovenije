@@ -13,6 +13,7 @@ const apiUrls = {       // API URL for each year
     '2011': 'https://podatki.gov.si/api/3/action/datastore_search?resource_id=4913b207-ab2c-4fd3-b91b-1889fa1c7054'
 };
 
+var selectedYear = 2021;
 
 // Function to initialize the buttons
 function initializeButtons() {
@@ -23,6 +24,7 @@ function initializeButtons() {
         button.classList.add('button-year'); // Add the general button class
         button.addEventListener('click', function() {
             fetchData(year);
+            selectedYear = year;
             updateButtonStyles(button); // Function to update button styles
         });
         buttonsContainer.appendChild(button);
@@ -40,7 +42,9 @@ function updateButtonStyles(selectedButton) {
     selectedButton.classList.add('selected');
 }
 
+
 google.charts.load('current', {'packages':['corechart']});
+
 
 async function fetchData(year) {
     const url = apiUrls[year];
@@ -48,34 +52,31 @@ async function fetchData(year) {
         const response = await fetch(url);
         const data = await response.json();
 
+ 
+        const columnChartData = processDataForColumnChart(data);
+        const geoChartData = processDataForGeoChart(data);
         const pieChartData = processDataForPieChart(data);
-        const columnChartData = processDataForColumnChart(data); // Add this line
-        const geoChartData = processDataForGeoChart(data); // Add this line
-
 
         console.log(data.result.records);
 
         // Call drawCharts function with both data sets
         google.charts.setOnLoadCallback(() => drawCharts(columnChartData, geoChartData, pieChartData));
-        updateTable(data);
 
-        
+        updateTable(data);
 
     } catch (error) {
         console.error('Error fetching data:', error);
     }
-
     
 }
-
 
 const fieldMappings = {
     'Prometni odsek': ['Prometni odsek'],
     'MO': ['Motorji'],
     'OV': ['Osebna vozila'],
     'AB': ['Avtobusi'],
-    'LT': ['Lah. tov < 3,5t', 'Lah. tov. < 3,5t', 'Lah. tov.  < 3,5t'], // All variations
-    'ST': ['Sr. tov 3,5-7t', 'Sr. tov. 3,5-7t', 'Sr. tov.  3,5-7t', 'Sr. tov  3,5-7t'],
+    'LT': ['Lah. tov.  < 3,5t', 'Lah. tov < 3,5t', 'Lah. tov. < 3,5t'], // All variations
+    'ST': ['Sr. tov  3,5-7t', 'Sr. tov.  3,5-7t'],
     'TT': ['Tež. tov. nad 7t'],
     'TP': ['Tov. s prik.'],
     'VL': ['Vlačilci'],
@@ -193,22 +194,38 @@ function processDataForPieChart(apiResponse) {
         'VL': 0
     };
 
-    apiResponse.result.records.forEach(record => {
-        // Parse string to integer and accumulate counts
 
-        vehicleCounts['MO'] += parseInt(record['Motorji']) || 0;
-        vehicleCounts['OV'] += parseInt(record['Osebna vozila']) || 0;
-        vehicleCounts['AB'] += parseInt(record['Avtobusi']) || 0;
-        vehicleCounts['LT'] += parseInt(record['Lah. tov < 3,5t', 'Lah. tov. < 3,5t', 'Lah. tov.  < 3,5t']) || 0;
-        vehicleCounts['ST'] += parseInt(record['Sr. tov 3,5-7t', 'Sr. tov. 3,5-7t', 'Sr. tov.  3,5-7t', 'Sr. tov  3,5-7t']) || 0;
-        vehicleCounts['TT'] += parseInt(record['Tež. tov. nad 7t']) || 0;
-        vehicleCounts['TP'] += parseInt(record['Tov. s prik.']) || 0;
-        vehicleCounts['VL'] += parseInt(record['Vlačilci']) || 0;
+    apiResponse.result.records.forEach(record => {
+        // Determine the structure based on the year
+        let year = parseInt(selectedYear);
+
+        console.log(selectedYear, year);
+
+        // Common structure for all years
+    vehicleCounts['MO'] += parseInt(record['Motorji']) || 0;
+    vehicleCounts['OV'] += parseInt(record['Osebna vozila']) || 0;
+    vehicleCounts['AB'] += parseInt(record['Avtobusi']) || 0;
+    vehicleCounts['LT'] += parseInt(record['Lah. tov. < 3,5t']) || 0;
+    vehicleCounts['ST'] += parseInt(record['Sr. tov.  3,5-7t']) || 0;
+    vehicleCounts['TT'] += parseInt(record['Tež. tov. nad 7t']) || 0;
+    vehicleCounts['TP'] += parseInt(record['Tov. s prik.']) || 0;
+    vehicleCounts['VL'] += parseInt(record['Vlačilci']) || 0;
+
+    // Adjustments for specific year ranges
+    if (year >= 2011 && year <= 2014) {
+        // No additional adjustments needed
+    } else if (year >= 2015 && year <= 2016) {
+        vehicleCounts['LT'] += parseInt(record['Lah. tov < 3,5t']) || 0;
+        vehicleCounts['ST'] += parseInt(record['Sr. tov  3,5-7t']) || 0;
+    } else if (year >= 2017 && year <= 2021) {
+        vehicleCounts['LT'] += parseInt(record['Lah. tov.  < 3,5t']) || 0;
+    }
 
     });
 
     let chartData = [['Vehicle Type', 'Count']];
     for (let type in vehicleCounts) {
+        console.log(vehicleCounts);
         chartData.push([type, vehicleCounts[type]]);
     }
     return chartData;

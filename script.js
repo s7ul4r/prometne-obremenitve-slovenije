@@ -14,8 +14,6 @@ const apiUrls = {       // API URL for each year
 };
 
 
-
-
 // Function to initialize the buttons
 function initializeButtons() {
     const buttonsContainer = document.getElementById('buttons-container');
@@ -52,28 +50,15 @@ async function fetchData(year) {
 
         const pieChartData = processDataForPieChart(data);
         const columnChartData = processDataForColumnChart(data); // Add this line
+        const geoChartData = processDataForGeoChart(data); // Add this line
+
 
         console.log(data.result.records);
 
         // Call drawCharts function with both data sets
-        google.charts.setOnLoadCallback(() => drawCharts(columnChartData, pieChartData));
+        google.charts.setOnLoadCallback(() => drawCharts(columnChartData, geoChartData, pieChartData));
         updateTable(data);
 
-        // New logic to process traffic data for GeoChart
-        let cityTrafficCounts = {};
-        data.result.records.forEach(record => {
-            let section = record['Prometni odsek'];
-            let trafficCount = parseInt(record['Vsa vozila (PLDP)']) || 0;
-            if (trafficSections.hasOwnProperty(section)) {
-                let city = trafficSections[section];
-                if (!cityTrafficCounts[city]) {
-                    cityTrafficCounts[city] = 0;
-                }
-                cityTrafficCounts[city] += trafficCount;
-            }
-        });
-
-        drawGeoChart(cityTrafficCounts);
         
 
     } catch (error) {
@@ -177,6 +162,25 @@ function processDataForColumnChart(apiResponse) {
     return chartData;
 }
 
+function processDataForGeoChart(apiResponse) {
+    // New logic to process traffic data for GeoChart
+    let cityTrafficCounts = {};
+    apiResponse.result.records.forEach(record => {
+        let section = record['Prometni odsek'];
+        let trafficCount = parseInt(record['Vsa vozila (PLDP)']) || 0;
+        if (trafficSections.hasOwnProperty(section)) {
+            let city = trafficSections[section];
+            if (!cityTrafficCounts[city]) {
+                cityTrafficCounts[city] = 0;
+            }
+            cityTrafficCounts[city] += trafficCount;
+        }
+    });
+
+    return cityTrafficCounts;
+}
+
+
 function processDataForPieChart(apiResponse) {
     let vehicleCounts = {
         'MO': 0,
@@ -274,12 +278,12 @@ function initMap() {
 
 
 
-function drawCharts(columnChartData, pieChartData) {
+function drawCharts(columnChartData, geoChartData, pieChartData) {
     // Draw Column Chart
     drawColumnChart(columnChartData);
+
+    drawGeoChart(geoChartData);
 
     // Draw Pie Chart
     drawPieChart(pieChartData);
 }
-
-

@@ -1,5 +1,6 @@
 
 const apiUrls = {       // API URL for each year
+    // '2022': 'https://podatki.gov.si/api/3/action/datastore_search?resource_id=92fd9936-dfdb-41b2-9700-4ce91355a023',
     '2021': 'https://podatki.gov.si/api/3/action/datastore_search?resource_id=e2b03b21-26fe-44c1-b0e6-58fabe325d1e',
     '2020': 'https://podatki.gov.si/api/3/action/datastore_search?resource_id=7ec91f10-1015-404c-901a-ff1ac4718471',
     '2019': 'https://podatki.gov.si/api/3/action/datastore_search?resource_id=fc1f28f1-2311-4cea-be63-6fed0792f0e0',
@@ -48,26 +49,71 @@ google.charts.load('current', {'packages':['corechart']});
 
 async function fetchData(year) {
     const url = apiUrls[year];
+    let allData = [];
+    let keepFetching = true;
+    let offset = 0;
+
     try {
-        const response = await fetch(url);
-        const data = await response.json();
+        while (keepFetching) {
+            const paginatedUrl = `${url}&offset=${offset}`;
+            const response = await fetch(paginatedUrl);
+            const apiResponse = await response.json();
 
- 
-        const columnChartData = processDataForColumnChart(data);
-        const geoChartData = processDataForGeoChart(data);
-        const pieChartData = processDataForPieChart(data);
+            // Check if the expected data is present in the response
+            if (apiResponse && apiResponse.result && apiResponse.result.records) {
+                for (const record of apiResponse.result.records) {
+                    let emptyStringCount = 0;
 
-        console.log(data.result.records);
+                    // Check each property of the record
+                    for (const key in record) {
+                        if (record[key] === '') {
+                            emptyStringCount++;
+                            // Break the loop if three empty strings are found
+                            if (emptyStringCount === 3) {
+                                keepFetching = false;
+                                break;
+                            }
+                        }
+                    }
+
+                    // If not breaking, add the record to allData
+                    if (keepFetching) {
+                        allData.push(record);
+                    } else {
+                        break; // Break out of the records loop if three empty strings are found
+                    }
+                }
+
+                
+
+                // Update the offset if keepFetching is still true
+                if (keepFetching) {
+                    offset += apiResponse.result.records.length;
+                }
+            } else {
+                console.log('Unexpected API response:', apiResponse);
+                keepFetching = false;
+            }
+
+            
+        }
+        console.log(allData);
+
+
+        // Process and display the data as before
+        
+        const columnChartData = processDataForColumnChart(allData);
+        const geoChartData = processDataForGeoChart(allData);
+        const pieChartData = processDataForPieChart(allData);
+        const tableData = allData;
 
         // Call drawCharts function with both data sets
-        google.charts.setOnLoadCallback(() => drawCharts(columnChartData, geoChartData, pieChartData));
-
-        updateTable(data);
+        google.charts.setOnLoadCallback(() => drawCharts(columnChartData, geoChartData, pieChartData, tableData));
 
     } catch (error) {
-        console.error('Error fetching data:', error);
+        console.error('Failed to fetch data:', error);
+        keepFetching = false;
     }
-    
 }
 
 const fieldMappings = {
@@ -88,8 +134,10 @@ function updateTable(apiResponse) {
     const dataTable = document.getElementById('data-table');
     dataTable.innerHTML = '';
 
-    if (apiResponse && apiResponse.result && apiResponse.result.records && apiResponse.result.records.length > 0) {
-        const data = apiResponse.result.records;
+    console.log("LENGTH:   ", apiResponse.length);
+
+    if (apiResponse.length > 0) {
+        const data = apiResponse;
         const table = document.createElement('table');
 
         // Create table header based on the fieldMappings keys (shortened names)
@@ -141,7 +189,7 @@ function findFieldName(dataItem, possibleFieldNames) {
 function processDataForColumnChart(apiResponse) {
     let sections = {};
 
-    apiResponse.result.records.forEach(record => {
+    apiResponse.forEach(record => {
         const sectionName = record['Prometni odsek'];
         const vehicleCount = parseInt(record['Vsa vozila (PLDP)']) || 0;
 
@@ -166,7 +214,7 @@ function processDataForColumnChart(apiResponse) {
 function processDataForGeoChart(apiResponse) {
     // New logic to process traffic data for GeoChart
     let cityTrafficCounts = {};
-    apiResponse.result.records.forEach(record => {
+    apiResponse.forEach(record => {
         let section = record['Prometni odsek'];
         let trafficCount = parseInt(record['Vsa vozila (PLDP)']) || 0;
         if (trafficSections.hasOwnProperty(section)) {
@@ -195,7 +243,7 @@ function processDataForPieChart(apiResponse) {
     };
 
 
-    apiResponse.result.records.forEach(record => {
+    apiResponse.forEach(record => {
         // Determine the structure based on the year
         let year = parseInt(selectedYear);
 
@@ -217,7 +265,7 @@ function processDataForPieChart(apiResponse) {
     } else if (year >= 2015 && year <= 2016) {
         vehicleCounts['LT'] += parseInt(record['Lah. tov < 3,5t']) || 0;
         vehicleCounts['ST'] += parseInt(record['Sr. tov  3,5-7t']) || 0;
-    } else if (year >= 2017 && year <= 2021) {
+    } else if (year >= 2017 && year <= 2022) {
         vehicleCounts['LT'] += parseInt(record['Lah. tov.  < 3,5t']) || 0;
     }
 
@@ -225,7 +273,6 @@ function processDataForPieChart(apiResponse) {
 
     let chartData = [['Vehicle Type', 'Count']];
     for (let type in vehicleCounts) {
-        console.log(vehicleCounts);
         chartData.push([type, vehicleCounts[type]]);
     }
     return chartData;
@@ -295,7 +342,7 @@ function initMap() {
 
 
 
-function drawCharts(columnChartData, geoChartData, pieChartData) {
+function drawCharts(columnChartData, geoChartData, pieChartData, tableData) {
     // Draw Column Chart
     drawColumnChart(columnChartData);
 
@@ -303,4 +350,6 @@ function drawCharts(columnChartData, geoChartData, pieChartData) {
 
     // Draw Pie Chart
     drawPieChart(pieChartData);
+
+    updateTable(tableData);
 }

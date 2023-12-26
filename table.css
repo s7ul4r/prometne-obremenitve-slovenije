@@ -1,23 +1,19 @@
-
-/* Container for the scrollable table */
 .table-container {
-    max-height: 450px; /* Adjust the height as needed */
-    overflow-y: auto; /* Add vertical scrollbar */
-    border: 1px solid #ccc; /* Example border */
-    border-radius: 10px; /* Rounded corners */
+    max-height: 450px;
+    overflow-y: auto;
+    border: 1px solid #ccc;
+    border-radius: 10px;
     margin-left: 15px;
     margin-right: 15px;
     margin-bottom: 15px;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.1); /* Shadow for depth */
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
 }
 
-/* Style the table */
 table {
     width: 100%;
     border-collapse: collapse;
 }
 
-/* Style the table headers */
 th {
     background-color: #dc3913;
     color: white;
@@ -25,11 +21,10 @@ th {
     font-size: 14pt;
     text-align: center;
     position: sticky;
-    top: 0; /* Make the header sticky */
-    z-index: 10; /* Ensure the header is above other elements */
+    top: 0;
+    z-index: 10;
 }
 
-/* Style the table rows and cells */
 tr {
     background-color: white;
     border-bottom: 1px solid #ddd;
@@ -41,17 +36,14 @@ td {
     border-right: 1px solid #ddd;
 }
 
-/* Style adjustments for the last cell */
 td:last-child {
     border-right: none;
 }
 
-/* Add a hover effect on rows */
 tr:hover {
     background-color: #f2f2f2;
 }
 
-/* Ensure the scrollbar looks nice (mainly for Webkit browsers) */
 .table-container::-webkit-scrollbar {
     scrollbar-width: thin;
 }

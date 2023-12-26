@@ -1,5 +1,5 @@
 
-const apiUrls = {       // API URL for each year
+const apiUrls = {       // Year with and API URL
     // '2022': 'https://podatki.gov.si/api/3/action/datastore_search?resource_id=92fd9936-dfdb-41b2-9700-4ce91355a023',
     '2021': 'https://podatki.gov.si/api/3/action/datastore_search?resource_id=e2b03b21-26fe-44c1-b0e6-58fabe325d1e',
     '2020': 'https://podatki.gov.si/api/3/action/datastore_search?resource_id=7ec91f10-1015-404c-901a-ff1ac4718471',
@@ -16,30 +16,36 @@ const apiUrls = {       // API URL for each year
 
 var selectedYear = 2021;
 
-// Function to initialize the buttons
-function initializeButtons() {
+
+function initializeButtons() {      // Function to initialize the buttons
     const buttonsContainer = document.getElementById('buttons-container');
     Object.keys(apiUrls).forEach(year => {
         const button = document.createElement('button');
         button.textContent = year;
-        button.classList.add('button-year'); // Add the general button class
-        button.addEventListener('click', function() {
+        console.log(button.textContent);
+        if (button.textContent === '2021') {
+            document.getElementById('loadingScreen').style.display = 'block';
             fetchData(year);
             selectedYear = year;
-            updateButtonStyles(button); // Function to update button styles
+            updateButtonStyles(button);
+        }
+        button.classList.add('button-year');
+        button.addEventListener('click', function() {
+            document.getElementById('loadingScreen').style.display = 'block';
+            fetchData(year);
+            selectedYear = year;
+            updateButtonStyles(button); 
         });
         buttonsContainer.appendChild(button);
     });
 }
-// Call the function to initialize buttons
+
 initializeButtons();
 
-function updateButtonStyles(selectedButton) {
-    // Remove 'selected' class from all buttons
+function updateButtonStyles(selectedButton) {       // Function to update the selected button styles
     document.querySelectorAll('.button-year').forEach(btn => {
         btn.classList.remove('selected');
     });
-    // Add 'selected' class to the clicked button
     selectedButton.classList.add('selected');
 }
 
@@ -59,16 +65,14 @@ async function fetchData(year) {
             const response = await fetch(paginatedUrl);
             const apiResponse = await response.json();
 
-            // Check if the expected data is present in the response
             if (apiResponse && apiResponse.result && apiResponse.result.records) {
                 for (const record of apiResponse.result.records) {
                     let emptyStringCount = 0;
 
-                    // Check each property of the record
                     for (const key in record) {
                         if (record[key] === '') {
                             emptyStringCount++;
-                            // Break the loop if three empty strings are found
+
                             if (emptyStringCount === 3) {
                                 keepFetching = false;
                                 break;
@@ -76,17 +80,13 @@ async function fetchData(year) {
                         }
                     }
 
-                    // If not breaking, add the record to allData
                     if (keepFetching) {
                         allData.push(record);
                     } else {
-                        break; // Break out of the records loop if three empty strings are found
+                        break;
                     }
                 }
 
-                
-
-                // Update the offset if keepFetching is still true
                 if (keepFetching) {
                     offset += apiResponse.result.records.length;
                 }
@@ -98,17 +98,14 @@ async function fetchData(year) {
             
         }
         console.log(allData);
-
-
-        // Process and display the data as before
         
         const columnChartData = processDataForColumnChart(allData);
         const geoChartData = processDataForGeoChart(allData);
         const pieChartData = processDataForPieChart(allData);
         const tableData = allData;
 
-        // Call drawCharts function with both data sets
         google.charts.setOnLoadCallback(() => drawCharts(columnChartData, geoChartData, pieChartData, tableData));
+        document.getElementById('loadingScreen').style.display = 'none';
 
     } catch (error) {
         console.error('Failed to fetch data:', error);
@@ -121,8 +118,8 @@ const fieldMappings = {
     'MO': ['Motorji'],
     'OV': ['Osebna vozila'],
     'AB': ['Avtobusi'],
-    'LT': ['Lah. tov.  < 3,5t', 'Lah. tov < 3,5t', 'Lah. tov. < 3,5t'], // All variations
-    'ST': ['Sr. tov  3,5-7t', 'Sr. tov.  3,5-7t'],
+    'LT': ['Lah. tov.  < 3,5t', 'Lah. tov < 3,5t', 'Lah. tov. < 3,5t'],     // All variations of LT
+    'ST': ['Sr. tov  3,5-7t', 'Sr. tov.  3,5-7t'],      // All variations of ST
     'TT': ['Tež. tov. nad 7t'],
     'TP': ['Tov. s prik.'],
     'VL': ['Vlačilci'],
@@ -139,8 +136,6 @@ function updateTable(apiResponse) {
     if (apiResponse.length > 0) {
         const data = apiResponse;
         const table = document.createElement('table');
-
-        // Create table header based on the fieldMappings keys (shortened names)
         const headerRow = document.createElement('tr');
         Object.keys(fieldMappings).forEach(shortName => {
             const headerCell = document.createElement('th');
@@ -149,7 +144,6 @@ function updateTable(apiResponse) {
         });
         table.appendChild(headerRow);
 
-        // Create table rows
         data.forEach(item => {
             const row = document.createElement('tr');
             Object.keys(fieldMappings).forEach(shortName => {
@@ -166,7 +160,6 @@ function updateTable(apiResponse) {
             });
             table.appendChild(row);
         });
-
         dataTable.appendChild(table);
     } else {
         const noData = document.createElement('p');
@@ -175,14 +168,13 @@ function updateTable(apiResponse) {
     }
 }
 
-
 function findFieldName(dataItem, possibleFieldNames) {
     for (let i = 0; i < possibleFieldNames.length; i++) {
         if (dataItem.hasOwnProperty(possibleFieldNames[i])) {
             return possibleFieldNames[i];
         }
     }
-    return null; // Return null if none of the field names are found
+    return null;
 }
 
 
@@ -200,10 +192,8 @@ function processDataForColumnChart(apiResponse) {
         }
     });
 
-    // Convert to array and sort
     let sortedSections = Object.entries(sections).sort((a, b) => b[1] - a[1]);
     
-    // Slice to get top 5 sections
     sortedSections = sortedSections.slice(0, 5);
 
     let chartData = [['Prometni Odsek', 'Vsa vozila']];
@@ -212,12 +202,23 @@ function processDataForColumnChart(apiResponse) {
 }
 
 function processDataForGeoChart(apiResponse) {
-    // New logic to process traffic data for GeoChart
+
+    function stripWhitespaceFromKeys(inputObject) {
+        const strippedObject = {};
+        for (const key in inputObject) {
+          if (inputObject.hasOwnProperty(key)) {
+            const strippedKey = key.replace(/\s/g, '');
+            strippedObject[strippedKey] = inputObject[key];
+          }
+        }
+        return strippedObject;
+      }
+
     let cityTrafficCounts = {};
     apiResponse.forEach(record => {
         let section = record['Prometni odsek'];
         let trafficCount = parseInt(record['Vsa vozila (PLDP)']) || 0;
-        if (trafficSections.hasOwnProperty(section)) {
+        if (stripWhitespaceFromKeys(trafficSections).hasOwnProperty(section.replace(/\s/g, ''))) {
             let city = trafficSections[section];
             if (!cityTrafficCounts[city]) {
                 cityTrafficCounts[city] = 0;
@@ -225,10 +226,8 @@ function processDataForGeoChart(apiResponse) {
             cityTrafficCounts[city] += trafficCount;
         }
     });
-
     return cityTrafficCounts;
 }
-
 
 function processDataForPieChart(apiResponse) {
     let vehicleCounts = {
@@ -242,33 +241,27 @@ function processDataForPieChart(apiResponse) {
         'VL': 0
     };
 
-
     apiResponse.forEach(record => {
-        // Determine the structure based on the year
         let year = parseInt(selectedYear);
-
         console.log(selectedYear, year);
 
-        // Common structure for all years
-    vehicleCounts['MO'] += parseInt(record['Motorji']) || 0;
-    vehicleCounts['OV'] += parseInt(record['Osebna vozila']) || 0;
-    vehicleCounts['AB'] += parseInt(record['Avtobusi']) || 0;
-    vehicleCounts['LT'] += parseInt(record['Lah. tov. < 3,5t']) || 0;
-    vehicleCounts['ST'] += parseInt(record['Sr. tov.  3,5-7t']) || 0;
-    vehicleCounts['TT'] += parseInt(record['Tež. tov. nad 7t']) || 0;
-    vehicleCounts['TP'] += parseInt(record['Tov. s prik.']) || 0;
-    vehicleCounts['VL'] += parseInt(record['Vlačilci']) || 0;
+        vehicleCounts['MO'] += parseInt(record['Motorji']) || 0;
+        vehicleCounts['OV'] += parseInt(record['Osebna vozila']) || 0;
+        vehicleCounts['AB'] += parseInt(record['Avtobusi']) || 0;
+        vehicleCounts['LT'] += parseInt(record['Lah. tov. < 3,5t']) || 0;
+        vehicleCounts['ST'] += parseInt(record['Sr. tov.  3,5-7t']) || 0;
+        vehicleCounts['TT'] += parseInt(record['Tež. tov. nad 7t']) || 0;
+        vehicleCounts['TP'] += parseInt(record['Tov. s prik.']) || 0;
+        vehicleCounts['VL'] += parseInt(record['Vlačilci']) || 0;
 
-    // Adjustments for specific year ranges
-    if (year >= 2011 && year <= 2014) {
-        // No additional adjustments needed
-    } else if (year >= 2015 && year <= 2016) {
-        vehicleCounts['LT'] += parseInt(record['Lah. tov < 3,5t']) || 0;
-        vehicleCounts['ST'] += parseInt(record['Sr. tov  3,5-7t']) || 0;
-    } else if (year >= 2017 && year <= 2022) {
-        vehicleCounts['LT'] += parseInt(record['Lah. tov.  < 3,5t']) || 0;
-    }
-
+        if (year >= 2011 && year <= 2014) {
+            // No adjustments needed
+        } else if (year >= 2015 && year <= 2016) {
+            vehicleCounts['LT'] += parseInt(record['Lah. tov < 3,5t']) || 0;
+            vehicleCounts['ST'] += parseInt(record['Sr. tov  3,5-7t']) || 0;
+        } else if (year >= 2017 && year <= 2022) {
+            vehicleCounts['LT'] += parseInt(record['Lah. tov.  < 3,5t']) || 0;
+        }
     });
 
     let chartData = [['Vehicle Type', 'Count']];
@@ -278,36 +271,27 @@ function processDataForPieChart(apiResponse) {
     return chartData;
 }
 
-
 function drawColumnChart(data) {
     var dataTable = google.visualization.arrayToDataTable(data);
 
     var options = {
-        colors: ['#109619']
-    };
+        'title':'Pet najbolj obremenjenih prometnih odsekov',
+        colors: ['#109619'],
+
+        titleTextStyle: {
+            fontName: 'Roboto',
+            fontSize: 18,
+            align: 'center'
+        }
+    }
 
     var chart = new google.visualization.ColumnChart(document.getElementById('column-chart'));
     chart.draw(dataTable, options);
 }
 
-function drawPieChart(dataArray) {
-    var dataTable = google.visualization.arrayToDataTable(dataArray);
-
-    var options = {
-
-    };
-
-    var chart = new google.visualization.PieChart(document.getElementById('pie-chart'));
-    chart.draw(dataTable, options);
-}
-
-
-
 function drawGeoChart(cityTrafficCounts) {
-    // Ensure Google Visualization API is loaded
     google.charts.load('current', {
         'packages': ['geochart'],
-        // Note: Depending on your locale, you might need to set other options
     });
     google.charts.setOnLoadCallback(drawChart);
 
@@ -321,16 +305,33 @@ function drawGeoChart(cityTrafficCounts) {
         }
 
         var options = {
-            region: 'SI', // Set the region to Slovenia; change as needed
+            region: 'SI',
             displayMode: 'regions',
             resolution: 'provinces',
-            colorAxis: {colors: ['#e6f2ff', '#0000ff']}, // Color range; adjust as needed
+            colorAxis: {colors: ['#e6f2ff', '#0000ff']},
             datalessRegionColor: 'ffffff'
         };
 
         var chart = new google.visualization.GeoChart(document.getElementById('geo-chart'));
         chart.draw(data, options);
     }
+}
+
+function drawPieChart(dataArray) {
+    var dataTable = google.visualization.arrayToDataTable(dataArray);
+
+    var options = {
+        'title':'Prometna obremenitev glede na tip vozila',
+
+        titleTextStyle: {
+            fontName: 'Roboto',
+            fontSize: 18,
+            align: 'center'
+        }
+    };
+
+    var chart = new google.visualization.PieChart(document.getElementById('pie-chart'));
+    chart.draw(dataTable, options);
 }
 
 function initMap() {
@@ -340,15 +341,9 @@ function initMap() {
     });
 }
 
-
-
 function drawCharts(columnChartData, geoChartData, pieChartData, tableData) {
-    // Draw Column Chart
     drawColumnChart(columnChartData);
-
     drawGeoChart(geoChartData);
-
-    // Draw Pie Chart
     drawPieChart(pieChartData);
 
     updateTable(tableData);

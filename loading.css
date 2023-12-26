@@ -25,6 +25,20 @@
     animation: spin 2s ease-in-out infinite;
 }
 
+#loadingScreen h1{
+    margin: 0 auto;
+    margin-top: 250px;
+    display: block;
+    font-family: 'Roboto';
+    font-weight: normal;
+    color: white;
+    text-align: center;
+    background-color: #3b3d3c;
+    padding: 20px;
+    width: 25%;
+    border-radius: 10px;
+} 
+
 @keyframes spin {
     0% { transform: translate(-50%, -50%) rotate(0deg); }
     100% { transform: translate(-50%, -50%) rotate(360deg); }

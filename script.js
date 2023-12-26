@@ -22,12 +22,11 @@ function initializeButtons() {      // Function to initialize the buttons
     Object.keys(apiUrls).forEach(year => {
         const button = document.createElement('button');
         button.textContent = year;
-        console.log(button.textContent);
         if (button.textContent === '2021') {
-            document.getElementById('loadingScreen').style.display = 'block';
-            fetchData(year);
-            selectedYear = year;
-            updateButtonStyles(button);
+             document.getElementById('loadingScreen').style.display = 'block';
+             fetchData(year);
+             selectedYear = year;
+             updateButtonStyles(button);
         }
         button.classList.add('button-year');
         button.addEventListener('click', function() {
@@ -64,25 +63,41 @@ async function fetchData(year) {
             const paginatedUrl = `${url}&offset=${offset}`;
             const response = await fetch(paginatedUrl);
             const apiResponse = await response.json();
+            const incorrectValues = ["Števec QLTC10 loči 10 kategorij vozil", "Tip izračuna : ", "Števno mesto", "TT - Težki tovornjaki nad 7t", "Oznaka števnega mesta", "Tež. tov. nad 7t", "Ime števnega mesta", "TP - Tovorni s prikolico", "Ime števnega mesta", "Tov. s prik.", "TIP", "Tip izračuna", "QLD-6         Števec QLD-6 loči 10 kategorij vozil", "QLTC-8       Števec QLTC-8 loči 10 kategorij vozil", "PRAZNO     V letu 2011 števec ni deloval", "R 11x4        Ročno štetje", "                   11x4 Leto zadnjega ročnega štetja (2011) in število štetij v letu (4)", "tip izračuna : WIM za izračun NOO na osnovi WIM meritev na merjenem odseku, ", "P                  Privzet  (na tem odseku se ne izvaja štetje,  promet je ocenjen)", "Vsa vozila (PLDP)", "PLDP - Povp. letni dnevni promet vseh motornih vozil", "Motorji", "MO - Motorji", "Osebna vozila",  "OA - Osebna vozila", "Avtobusi", "BUS - Avtobusi", "Lahka tov. < 3,5t", "LT - Lahki tovorni promet do 3,5t", "Sr. tov.  3,5-7t", "ST - Srednje težki tovornjaki 3,5-7t", "Vlačilci", "TPP - Vlačilci", "NOO", "nominalna osna obremenitev, 20 letno povprečje", "Tip štetja", "QLD5         Števec QLD5 loči 5 kategorij vozil" ];
+            const endIndicator = "* Promet smo na nekaterih avt. števnih mestih z večjim izpadom podatkov podatkov ročno koregirali."
 
             if (apiResponse && apiResponse.result && apiResponse.result.records) {
                 for (const record of apiResponse.result.records) {
                     let emptyStringCount = 0;
+                    let allRecords = [];
+                    let isIncorrect = false;
 
                     for (const key in record) {
-                        if (record[key] === '') {
+                        allRecords.push(record[key])
+                        if (allRecords.some(key => incorrectValues.includes(key))) {
+                            isIncorrect = true;
+                            break;
+                            
+                            
+                            
+                        } else if (record[key] === '') {
                             emptyStringCount++;
 
-                            if (emptyStringCount === 3) {
+                            if (emptyStringCount === 13) {
                                 keepFetching = false;
+                                console.log("Log kjer break-a:  ", record);
                                 break;
                             }
                         }
                     }
 
-                    if (keepFetching) {
-                        allData.push(record);
+                    if (keepFetching == true) {
+                        if (isIncorrect === false) {
+                            allData.push(record);
+                        }
+                        
                     } else {
+                        isIncorrect = false;
                         break;
                     }
                 }
@@ -97,7 +112,7 @@ async function fetchData(year) {
 
             
         }
-        console.log(allData);
+        // console.log(allData);
         
         const columnChartData = processDataForColumnChart(allData);
         const geoChartData = processDataForGeoChart(allData);
@@ -243,7 +258,7 @@ function processDataForPieChart(apiResponse) {
 
     apiResponse.forEach(record => {
         let year = parseInt(selectedYear);
-        console.log(selectedYear, year);
+        console.log('SELECTED YEAR:  ', selectedYear);
 
         vehicleCounts['MO'] += parseInt(record['Motorji']) || 0;
         vehicleCounts['OV'] += parseInt(record['Osebna vozila']) || 0;
@@ -279,9 +294,7 @@ function drawColumnChart(data) {
         colors: ['#109619'],
 
         titleTextStyle: {
-            fontName: 'Roboto',
-            fontSize: 18,
-            align: 'center'
+            fontSize: 20
         }
     }
 
@@ -324,9 +337,7 @@ function drawPieChart(dataArray) {
         'title':'Prometna obremenitev glede na tip vozila',
 
         titleTextStyle: {
-            fontName: 'Roboto',
-            fontSize: 18,
-            align: 'center'
+            fontSize: 20,
         }
     };
 

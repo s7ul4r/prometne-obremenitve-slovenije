@@ -1,6 +1,5 @@
 
 const apiUrls = {       // Year with and API URL
-    // '2022': 'https://podatki.gov.si/api/3/action/datastore_search?resource_id=92fd9936-dfdb-41b2-9700-4ce91355a023',
     '2021': 'https://podatki.gov.si/api/3/action/datastore_search?resource_id=e2b03b21-26fe-44c1-b0e6-58fabe325d1e',
     '2020': 'https://podatki.gov.si/api/3/action/datastore_search?resource_id=7ec91f10-1015-404c-901a-ff1ac4718471',
     '2019': 'https://podatki.gov.si/api/3/action/datastore_search?resource_id=fc1f28f1-2311-4cea-be63-6fed0792f0e0',
@@ -57,51 +56,46 @@ async function fetchData(year) {
     let allData = [];
     let keepFetching = true;
     let offset = 0;
-
     try {
         while (keepFetching) {
             const paginatedUrl = `${url}&offset=${offset}`;
             const response = await fetch(paginatedUrl);
             const apiResponse = await response.json();
-            const incorrectValues = ["Števec QLTC10 loči 10 kategorij vozil", "Tip izračuna : ", "Števno mesto", "TT - Težki tovornjaki nad 7t", "Oznaka števnega mesta", "Tež. tov. nad 7t", "Ime števnega mesta", "TP - Tovorni s prikolico", "Ime števnega mesta", "Tov. s prik.", "TIP", "Tip izračuna", "QLD-6         Števec QLD-6 loči 10 kategorij vozil", "QLTC-8       Števec QLTC-8 loči 10 kategorij vozil", "PRAZNO     V letu 2011 števec ni deloval", "R 11x4        Ročno štetje", "                   11x4 Leto zadnjega ročnega štetja (2011) in število štetij v letu (4)", "tip izračuna : WIM za izračun NOO na osnovi WIM meritev na merjenem odseku, ", "P                  Privzet  (na tem odseku se ne izvaja štetje,  promet je ocenjen)", "Vsa vozila (PLDP)", "PLDP - Povp. letni dnevni promet vseh motornih vozil", "Motorji", "MO - Motorji", "Osebna vozila",  "OA - Osebna vozila", "Avtobusi", "BUS - Avtobusi", "Lahka tov. < 3,5t", "LT - Lahki tovorni promet do 3,5t", "Sr. tov.  3,5-7t", "ST - Srednje težki tovornjaki 3,5-7t", "Vlačilci", "TPP - Vlačilci", "NOO", "nominalna osna obremenitev, 20 letno povprečje", "Tip štetja", "QLD5         Števec QLD5 loči 5 kategorij vozil" ];
-            const endIndicator = "* Promet smo na nekaterih avt. števnih mestih z večjim izpadom podatkov podatkov ročno koregirali."
-
+            const incorrectValues = ["Števec QLTC10 loči 10 kategorij vozil", "Tip izračuna : ", "Števno mesto", "TT - Težki tovornjaki nad 7t", "Oznaka števnega mesta", "Tež. tov. nad 7t", "Ime števnega mesta",
+            "TP - Tovorni s prikolico", "Ime števnega mesta", "Tov. s prik.", "TIP", "Tip izračuna", "QLD-6         Števec QLD-6 loči 10 kategorij vozil", "QLTC-8       Števec QLTC-8 loči 10 kategorij vozil",
+            "PRAZNO     V letu 2011 števec ni deloval", "R 11x4        Ročno štetje", "                   11x4 Leto zadnjega ročnega štetja (2011) in število štetij v letu (4)", "tip izračuna : WIM za izračun NOO na osnovi WIM meritev na merjenem odseku, ",
+            "P                  Privzet  (na tem odseku se ne izvaja štetje,  promet je ocenjen)", "Vsa vozila (PLDP)", "PLDP - Povp. letni dnevni promet vseh motornih vozil", "Motorji", "MO - Motorji", "Osebna vozila",  "OA - Osebna vozila", "Avtobusi",
+            "BUS - Avtobusi", "Lahka tov. < 3,5t", "LT - Lahki tovorni promet do 3,5t", "Sr. tov.  3,5-7t", "ST - Srednje težki tovornjaki 3,5-7t", "Vlačilci", "TPP - Vlačilci", "NOO", "nominalna osna obremenitev, 20 letno povprečje", "Tip štetja",
+            "QLD5         Števec QLD5 loči 5 kategorij vozil" ];
             if (apiResponse && apiResponse.result && apiResponse.result.records) {
                 for (const record of apiResponse.result.records) {
                     let emptyStringCount = 0;
                     let allRecords = [];
                     let isIncorrect = false;
-
                     for (const key in record) {
                         allRecords.push(record[key])
                         if (allRecords.some(key => incorrectValues.includes(key))) {
                             isIncorrect = true;
                             break;
-                            
-                            
-                            
                         } else if (record[key] === '') {
                             emptyStringCount++;
 
                             if (emptyStringCount === 13) {
                                 keepFetching = false;
-                                console.log("Log kjer break-a:  ", record);
+                                console.log("Log that breaks:  ", record);
                                 break;
                             }
                         }
                     }
-
                     if (keepFetching == true) {
                         if (isIncorrect === false) {
                             allData.push(record);
                         }
-                        
                     } else {
                         isIncorrect = false;
                         break;
                     }
                 }
-
                 if (keepFetching) {
                     offset += apiResponse.result.records.length;
                 }
@@ -109,11 +103,7 @@ async function fetchData(year) {
                 console.log('Unexpected API response:', apiResponse);
                 keepFetching = false;
             }
-
-            
-        }
-        // console.log(allData);
-        
+        }        
         const columnChartData = processDataForColumnChart(allData);
         const geoChartData = processDataForGeoChart(allData);
         const pieChartData = processDataForPieChart(allData);
@@ -307,16 +297,14 @@ function drawGeoChart(cityTrafficCounts) {
         'packages': ['geochart'],
     });
     google.charts.setOnLoadCallback(drawChart);
-
+    
     function drawChart() {
         var data = new google.visualization.DataTable();
         data.addColumn('string', 'City');
         data.addColumn('number', 'Traffic Density');
-
         for (var city in cityTrafficCounts) {
             data.addRow([city, cityTrafficCounts[city]]);
         }
-
         var options = {
             region: 'SI',
             displayMode: 'regions',
@@ -324,7 +312,6 @@ function drawGeoChart(cityTrafficCounts) {
             colorAxis: {colors: ['#e6f2ff', '#0000ff']},
             datalessRegionColor: 'ffffff'
         };
-
         var chart = new google.visualization.GeoChart(document.getElementById('geo-chart'));
         chart.draw(data, options);
     }
@@ -332,7 +319,6 @@ function drawGeoChart(cityTrafficCounts) {
 
 function drawPieChart(dataArray) {
     var dataTable = google.visualization.arrayToDataTable(dataArray);
-
     var options = {
         'title':'Prometna obremenitev glede na tip vozila',
 
@@ -340,7 +326,6 @@ function drawPieChart(dataArray) {
             fontSize: 20,
         }
     };
-
     var chart = new google.visualization.PieChart(document.getElementById('pie-chart'));
     chart.draw(dataTable, options);
 }

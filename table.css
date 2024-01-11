@@ -24,7 +24,28 @@ th {
     position: sticky;
     top: 0;
     z-index: 10;
+    cursor: pointer;
 }
+
+th.sort-asc::after, th.sort-desc::after {
+    content: '';
+    border: 5px solid transparent;
+    display: inline-block;
+    margin-left: 5px;
+}
+
+th.sort-asc::after {
+    content: '\25BC';
+    font-size: 0.8em;
+    margin-left: 5px;
+}
+
+th.sort-desc::after {
+    content: '\25B2';
+    font-size: 0.8em;
+    margin-left: 5px;
+}
+
 
 tr {
     background-color: white;

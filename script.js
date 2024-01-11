@@ -142,11 +142,17 @@ function updateTable(apiResponse) {
         const data = apiResponse;
         const table = document.createElement('table');
         const headerRow = document.createElement('tr');
-        Object.keys(fieldMappings).forEach(shortName => {
-            const headerCell = document.createElement('th');
-            headerCell.textContent = shortName;
-            headerRow.appendChild(headerCell);
-        });
+
+
+
+
+
+        Object.keys(fieldMappings).forEach((shortName, columnIndex) => {
+        const headerCell = document.createElement('th');
+        headerCell.textContent = shortName;
+        headerCell.addEventListener('click', () => sortTableByColumn(table, columnIndex));
+        headerRow.appendChild(headerCell);
+    });
         table.appendChild(headerRow);
 
         data.forEach(item => {
@@ -171,6 +177,44 @@ function updateTable(apiResponse) {
         noData.textContent = 'No data available for this year.';
         dataTable.appendChild(noData);
     }
+}
+
+let currentSortColumn = null;
+let currentSortOrder = 'asc';
+
+function sortTableByColumn(table, columnIndex) {
+    const rows = Array.from(table.querySelectorAll('tr:nth-child(n+2)'));
+    const isAscending = (currentSortColumn === columnIndex) && currentSortOrder === 'asc';
+
+    rows.sort((rowA, rowB) => {
+        let cellA = rowA.children[columnIndex].textContent.trim();
+        let cellB = rowB.children[columnIndex].textContent.trim();
+
+        if (columnIndex > 0) {
+            cellA = Number(cellA);
+            cellB = Number(cellB);
+            return isAscending ? cellA - cellB : cellB - cellA;
+        } else {
+            return isAscending ? cellA.localeCompare(cellB, 'sl') : cellB.localeCompare(cellA, 'sl');
+        }
+    });
+
+    currentSortOrder = isAscending ? 'desc' : 'asc';
+    currentSortColumn = columnIndex;
+
+    rows.forEach(row => table.appendChild(row));
+
+    updateSortIndicator(table, columnIndex, currentSortOrder);
+}
+
+
+
+function updateSortIndicator(table, columnIndex, sortOrder) {
+    table.querySelectorAll('th').forEach(th => {
+        th.classList.remove('sort-asc', 'sort-desc');
+    });
+
+    table.querySelector(`th:nth-child(${columnIndex + 1})`).classList.add(sortOrder === 'asc' ? 'sort-asc' : 'sort-desc');
 }
 
 function findFieldName(dataItem, possibleFieldNames) {

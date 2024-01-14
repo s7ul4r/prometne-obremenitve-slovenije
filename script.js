@@ -345,7 +345,7 @@ function drawGeoChart(cityTrafficCounts) {
     function drawChart() {
         var data = new google.visualization.DataTable();
         data.addColumn('string', 'City');
-        data.addColumn('number', 'Traffic Density');
+        data.addColumn('number', 'Vsa vozila');
         for (var city in cityTrafficCounts) {
             data.addRow([city, cityTrafficCounts[city]]);
         }
